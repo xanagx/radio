@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAVEHUB // Global WebSDR & Internet Radio</title>
+  <meta name="description" content="Stream live Medium Wave and Shortwave radio broadcasts via global WebSDR receivers and explore 40,000+ internet radio stations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header & Navigation -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <span class="pulse-ring"></span>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+            <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+            <circle cx="12" cy="12" r="2"/>
+            <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+            <path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>WAVE<span>HUB</span></h1>
+          <span class="brand-sub">SDR & NET RADIO RECEIVER</span>
+        </div>
+      </div>
+
+      <!-- Mode Switcher Tabs -->
+      <nav class="mode-tabs">
+        <button id="tab-websdr" class="tab-btn active" data-mode="websdr">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/>
+          </svg>
+          Medium Wave & Shortwave (WebSDR)
+        </button>
+        <button id="tab-netradio" class="tab-btn" data-mode="netradio">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          Internet Radio
+        </button>
+      </nav>
+
+      <!-- Global Controls -->
+      <div class="header-controls">
+        <!-- Power Button -->
+        <button id="power-btn" class="ctrl-btn power-btn on" title="Toggle Radio Power">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+            <line x1="12" y1="2" x2="12" y2="12"/>
+          </svg>
+          <span class="power-label">POWER</span>
+        </button>
+
+        <!-- Record Button -->
+        <button id="record-btn" class="ctrl-btn record-btn" title="Record Broadcast to WAV">
+          <span class="rec-dot"></span>
+          <span id="rec-label">REC</span>
+        </button>
+
+        <!-- Bookmarks Toggle -->
+        <button id="bookmarks-btn" class="ctrl-btn" title="View Bookmarks">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+
+        <!-- Volume -->
+        <div class="volume-widget">
+          <button id="mute-btn" class="vol-icon-btn" title="Mute/Unmute">
+            <svg id="vol-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </button>
+          <input type="range" id="master-volume" min="0" max="1" step="0.01" value="0.8" />
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-workspace">
+      
+      <!-- ============================================== -->
+      <!-- VIEW 1: WebSDR Medium Wave & Shortwave Console -->
+      <!-- ============================================== -->
+      <section id="websdr-view" class="radio-view active">
+        
+        <!-- Top Status & Receiver Bar -->
+        <div class="sdr-top-bar glass-panel">
+          <div class="receiver-badge" id="open-receiver-picker" title="Click to switch global receiver node">
+            <div class="rx-status-indicator">
+              <span class="status-led online"></span>
+              <span class="rx-name" id="current-rx-name">VK5ARG Remote Receiver</span>
+            </div>
+            <span class="rx-loc" id="current-rx-loc">Tarlee, South Australia</span>
+            <button class="btn-pill rx-switch-btn">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                <path d="M21 21v-5h-5"/>
+              </svg>
+              Switch Node
+            </button>
+          </div>
+
+          <div class="signal-metrics">
+            <div class="metric-item">
+              <span class="metric-label">DEMOD</span>
+              <span class="metric-val" id="telemetry-demod">AM</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">AUDIO RATE</span>
+              <span class="metric-val" id="telemetry-rate">12.0 kHz</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">SIGNAL (RSSI)</span>
+              <span class="metric-val highlight" id="telemetry-rssi">-78.2 dBm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Tuner Deck (Chassis) -->
+        <div class="tuner-deck glass-panel">
+          
+          <!-- Left Column: Frequency Readout & S-Meter -->
+          <div class="tuner-main">
+            <!-- Digital Frequency Readout Display -->
+            <div class="freq-display-chassis">
+              <div class="freq-glow-border"></div>
+              <div class="freq-screen">
+                <div class="screen-meta-top">
+                  <span class="band-tag" id="current-band-label">MEDIUM WAVE (AM)</span>
+                  <span class="rf-state"><span class="led-amber"></span>RF ACTIVE</span>
+                </div>
+                
+                <div class="freq-numbers-row">
+                  <div class="freq-value" id="display-frequency">01,000.00</div>
+                  <div class="freq-unit">kHz</div>
+                </div>
+
+                <div class="screen-meta-bottom">
+                  <div class="smeter-numeric">S-VAL: <span id="smeter-unit">S8</span></div>
+                  <div class="tuning-step-indicator">STEP: <strong>1.0 kHz</strong></div>
+                </div>
+              </div>
+
+              <!-- Quick Frequency Adjust Buttons -->
+              <div class="tuning-step-buttons">
+                <button class="step-btn" data-step="-10000">-10k</button>
+                <button class="step-btn" data-step="-5000">-5k</button>
+                <button class="step-btn" data-step="-1000">-1k</button>
+                <button class="step-btn" data-step="-100">-100Hz</button>
+                <button class="step-btn" data-step="100">+100Hz</button>
+                <button class="step-btn" data-step="1000">+1k</button>
+                <button class="step-btn" data-step="5000">+5k</button>
+                <button class="step-btn" data-step="10000">+10k</button>
+              </div>
+
+              <!-- Continuous Tuning Slider / Dial -->
+              <div class="tuning-slider-container">
+                <input type="range" id="freq-slider" min="100" max="30000" step="1" value="1000" />
+                <div class="slider-ticks">
+                  <span>100 kHz</span>
+                  <span>530 (MW)</span>
+                  <span>7 MHz (40m)</span>
+                  <span>14 MHz (20m)</span>
+                  <span>21 MHz (15m)</span>
+                  <span>30 MHz</span>
+                </div>
+              </div>
+
+              <!-- Direct Manual Frequency Input -->
+              <form id="direct-tune-form" class="direct-tune-form">
+                <div class="input-with-label">
+                  <label for="direct-freq-input">DIRECT FREQUENCY (kHz):</label>
+                  <input type="number" id="direct-freq-input" step="0.1" min="10" max="30000" placeholder="e.g. 9420 or 1000" />
+                </div>
+                <button type="submit" class="btn-primary">TUNE</button>
+                <button type="button" id="save-sdr-bookmark" class="btn-secondary" title="Bookmark this frequency">
+                  ★ Save Preset
+                </button>
+              </form>
+            </div>
+
+            <!-- Modulation Mode Selector Buttons -->
+            <div class="mode-selector-panel">
+              <span class="panel-section-title">DEMODULATION MODE</span>
+              <div class="mode-btn-group">
+                <button class="mode-btn active" data-mod="am">AM</button>
+                <button class="mode-btn" data-mod="usb">USB</button>
+                <button class="mode-btn" data-mod="lsb">LSB</button>
+                <button class="mode-btn" data-mod="cw">CW</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Analog S-Meter & Audio Visualizer -->
+          <div class="tuner-instruments">
+            
+            <!-- Analog S-Meter Gauge -->
+            <div class="instrument-box smeter-instrument">
+              <div class="instrument-header">
+                <span class="inst-title">SIGNAL LEVEL (S-METER)</span>
+                <span class="inst-val" id="smeter-dbm">-78 dBm</span>
+              </div>
+              <div class="analog-smeter">
+                <svg viewBox="0 0 200 95" class="smeter-svg">
+                  <!-- Arc Scale -->
+                  <path d="M 25 80 A 75 75 0 0 1 175 80" fill="none" stroke="#223046" stroke-width="6" stroke-linecap="round"/>
+                  <path d="M 25 80 A 75 75 0 0 1 125 24" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+                  <path d="M 125 24 A 75 75 0 0 1 175 80" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+                  
+                  <!-- Tick marks -->
+                  <text x="25" y="90" class="tick-text">S1</text>
+                  <text x="50" y="55" class="tick-text">S3</text>
+                  <text x="80" y="36" class="tick-text">S5</text>
+                  <text x="100" y="27" class="tick-text">S7</text>
+                  <text x="122" y="32" class="tick-text red">S9</text>
+                  <text x="148" y="50" class="tick-text red">+20</text>
+                  <text x="175" y="90" class="tick-text red">+60</text>
+
+                  <!-- Animated Needle (Pivot at 100, 85) -->
+                  <line id="smeter-needle" x1="100" y1="85" x2="40" y2="40" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle cx="100" cy="85" r="4.5" fill="#f59e0b"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Live Audio Visualizer Canvas -->
+            <div class="instrument-box visualizer-instrument">
+              <div class="instrument-header">
+                <span class="inst-title">AUDIO SPECTRUM & OSCILLOSCOPE</span>
+                <div class="viz-toggle-group">
+                  <button id="viz-mode-fft" class="viz-btn active">FFT</button>
+                  <button id="viz-mode-wave" class="viz-btn">WAVE</button>
+                </div>
+              </div>
+              <div class="canvas-container">
+                <canvas id="audio-visualizer-canvas"></canvas>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Broadcast & Amateur Band Presets -->
+        <div class="band-presets-deck glass-panel">
+          <div class="panel-header-row">
+            <span class="panel-section-title">QUICK BROADCAST & SHORTWAVE BANDS</span>
+            <span class="band-help">Click any band to tune instantly</span>
+          </div>
+
+          <div class="band-chips-grid">
+            <!-- Medium Wave (AM) -->
+            <button class="band-chip active" data-freq="1000" data-mod="am" data-band="Medium Wave (AM)">
+              <span class="band-freq">530 - 1710 kHz</span>
+              <span class="band-name">MW / AM Radio</span>
+            </button>
+
+            <!-- 160m Band -->
+            <button class="band-chip" data-freq="1900" data-mod="lsb" data-band="160m Ham Band">
+              <span class="band-freq">1.8 - 2.0 MHz</span>
+              <span class="band-name">160m Top Band</span>
+            </button>
+
+            <!-- 80m Band -->
+            <button class="band-chip" data-freq="3700" data-mod="lsb" data-band="80m Ham Band">
+              <span class="band-freq">3.5 - 3.8 MHz</span>
+              <span class="band-name">80m Shortwave</span>
+            </button>
+
+            <!-- 49m International Broadcast -->
+            <button class="band-chip" data-freq="6070" data-mod="am" data-band="49m Broadcast">
+              <span class="band-freq">5.9 - 6.2 MHz</span>
+              <span class="band-name">49m Broadcast</span>
+            </button>
+
+            <!-- 41m International Broadcast -->
+            <button class="band-chip" data-freq="7300" data-mod="am" data-band="41m Broadcast">
+              <span class="band-freq">7.2 - 7.45 MHz</span>
+              <span class="band-name">41m Broadcast</span>
+            </button>
+
+            <!-- 31m Prime Night Broadcast -->
+            <button class="band-chip" data-freq="9500" data-mod="am" data-band="31m Broadcast">
+              <span class="band-freq">9.4 - 9.9 MHz</span>
+              <span class="band-name">31m Broadcast</span>
+            </button>
+
+            <!-- 25m Broadcast -->
+            <button class="band-chip" data-freq="11800" data-mod="am" data-band="25m Broadcast">
+              <span class="band-freq">11.6 - 12.1 MHz</span>
+              <span class="band-name">25m Broadcast</span>
+            </button>
+
+            <!-- 19m Daytime Broadcast -->
+            <button class="band-chip" data-freq="15300" data-mod="am" data-band="19m Broadcast">
+              <span class="band-freq">15.1 - 15.8 MHz</span>
+              <span class="band-name">19m Broadcast</span>
+            </button>
+
+            <!-- 16m Daytime Broadcast -->
+            <button class="band-chip" data-freq="17600" data-mod="am" data-band="16m Broadcast">
+              <span class="band-freq">17.5 - 17.9 MHz</span>
+              <span class="band-name">16m Broadcast</span>
+            </button>
+
+            <!-- WWV Time Standard (10 MHz) -->
+            <button class="band-chip highlight-chip" data-freq="10000" data-mod="am" data-band="WWV Time Signal">
+              <span class="band-freq">10.000 MHz</span>
+              <span class="band-name">WWV Time Standard</span>
+            </button>
+
+            <!-- CHU Canada Time Standard -->
+            <button class="band-chip highlight-chip" data-freq="7850" data-mod="usb" data-band="CHU Canada Time">
+              <span class="band-freq">7.850 MHz</span>
+              <span class="band-name">CHU Time Signal</span>
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ============================================== -->
+      <!-- VIEW 2: Internet Radio Console                 -->
+      <!-- ============================================== -->
+      <section id="netradio-view" class="radio-view">
+        
+        <!-- Search & Genre Filter Bar -->
+        <div class="netradio-controls glass-panel">
+          
+          <div class="search-row">
+            <div class="search-input-wrapper">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="station-search-input" placeholder="Search 40,000+ stations by name (e.g. BBC, Jazz, Classic, NPR)..." />
+              <button id="clear-search-btn" class="clear-btn">&times;</button>
+            </div>
+            <button id="refresh-stations-btn" class="btn-primary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Search
+            </button>
+          </div>
+
+          <!-- Genre Filter Pills -->
+          <div class="genre-pills-row" id="genre-pills-container">
+            <button class="genre-pill active" data-genre="">All Genres</button>
+            <button class="genre-pill" data-genre="news">News</button>
+            <button class="genre-pill" data-genre="jazz">Jazz</button>
+            <button class="genre-pill" data-genre="classical">Classical</button>
+            <button class="genre-pill" data-genre="rock">Rock</button>
+            <button class="genre-pill" data-genre="electronic">Electronic</button>
+            <button class="genre-pill" data-genre="ambient">Ambient</button>
+            <button class="genre-pill" data-genre="chillout">Chillout</button>
+            <button class="genre-pill" data-genre="pop">Pop</button>
+            <button class="genre-pill" data-genre="retro">Retro</button>
+            <button class="genre-pill" data-genre="talk">Talk</button>
+          </div>
+        </div>
+
+        <!-- Active Internet Station Now Playing Bar -->
+        <div id="netradio-player-bar" class="now-playing-bar glass-panel hidden">
+          <div class="now-playing-info">
+            <div class="station-avatar" id="np-avatar">📻</div>
+            <div class="np-details">
+              <span class="np-title" id="np-station-name">Station Name</span>
+              <span class="np-sub" id="np-station-meta">128 kbps • MP3 • France</span>
+            </div>
+          </div>
+          
+          <div class="np-controls">
+            <button id="np-play-pause-btn" class="np-circle-btn">
+              <svg id="np-play-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </button>
+            <button id="np-bookmark-btn" class="ctrl-btn" title="Bookmark Station">
+              ★
+            </button>
+          </div>
+        </div>
+
+        <!-- Stations Grid -->
+        <div class="stations-grid-container">
+          <div class="grid-header">
+            <h3 id="station-list-title">Top Global Stations</h3>
+            <span class="station-count" id="station-count-label">Loading stations...</span>
+          </div>
+
+          <div class="stations-grid" id="stations-grid">
+            <!-- Dynamically populated station cards -->
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Global Receiver Picker Modal -->
+    <div id="receiver-modal" class="modal-backdrop hidden">
+      <div class="modal-dialog glass-panel">
+        <div class="modal-header">
+          <h2>Select WebSDR Receiver Node</h2>
+          <button id="close-receiver-modal" class="modal-close-btn">&times;</button>
+        </div>
+
+        <div class="modal-filters">
+          <input type="text" id="rx-filter-input" placeholder="Filter by country, location, or callsign..." />
+          <div class="rx-region-tabs" id="rx-region-tabs">
+            <button class="region-tab active" data-region="All">All Nodes</button>
+            <button class="region-tab" data-region="North America">North America</button>
+            <button class="region-tab" data-region="Europe">Europe</button>
+            <button class="region-tab" data-region="Oceania & Asia">Oceania & Asia</button>
+          </div>
+        </div>
+
+        <div class="receivers-list" id="receivers-list">
+          <!-- Dynamically populated receiver items -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Bookmarks / Presets Drawer -->
+    <div id="bookmarks-drawer" class="drawer-backdrop hidden">
+      <div class="drawer-panel glass-panel">
+        <div class="drawer-header">
+          <h2>Saved Presets & Bookmarks</h2>
+          <button id="close-bookmarks-drawer" class="drawer-close-btn">&times;</button>
+        </div>
+
+        <div class="drawer-tabs">
+          <button class="drawer-tab active" data-btype="sdr">WebSDR Frequencies</button>
+          <button class="drawer-tab" data-btype="net">Internet Stations</button>
+        </div>
+
+        <div class="drawer-content" id="bookmarks-list">
+          <!-- Dynamically populated bookmarks -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden HTML5 Audio Element for Internet Radio -->
+    <audio id="html-audio-player" preload="none"></audio>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
